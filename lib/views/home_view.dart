@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stocky/models/product.dart';
 import 'package:stocky/views/add_product_view.dart';
+import 'package:stocky/widgets/bottom_navbar.dart';
 import '../../viewmodels/home_viewmodel.dart';
 import '../../widgets/section_header.dart';
 import '../../widgets/product_card.dart';
@@ -148,30 +149,11 @@ class HomeView extends StatelessWidget {
               child: const Icon(Icons.add),
             ),
 
-            bottomNavigationBar: BottomNavigationBar(
-              type: BottomNavigationBarType.fixed,
-              selectedItemColor: Colors.green,
-              unselectedItemColor: Colors.grey,
+            bottomNavigationBar: BottomNavbar(
               currentIndex: vm.selectedIndex,
               onTap: vm.changeTab,
-              items: const [
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.home),
-                  label: 'Inicio',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.shopping_cart),
-                  label: 'Lista',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.restaurant_menu),
-                  label: 'Recetas',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.settings),
-                  label: 'Ajustes',
-                ),
-              ],
+              selectedColor: Colors.green,
+              unselectedColor: Colors.grey,
             ),
           );
         },
@@ -179,32 +161,18 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  // Navegar a añadir producto
   Future<void> _navigateToAddProduct(
     BuildContext context,
     HomeViewModel vm,
   ) async {
-    final result = await Navigator.push(
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => AddProductView(hiveService: hiveService),
       ),
     );
-
-    if (result == true && context.mounted) {
-      await vm.loadProducts();
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Producto guardado'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    }
   }
 
-  // Confirmar y eliminar producto
   Future<void> _confirmAndDelete(
     BuildContext context,
     HomeViewModel vm,
