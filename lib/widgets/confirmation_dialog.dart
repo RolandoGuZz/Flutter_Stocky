@@ -6,22 +6,29 @@ Future<bool?> showConfirmationDialog({
   required String content,
   String confirmText = 'Eliminar',
   String cancelText = 'Cancelar',
-  Color confirmColor = Colors.red,
 }) {
   return showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: Text(title),
+      title: Text(
+        title,
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      ),
       content: Text(content),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: Text(cancelText),
+          child: Text(
+            cancelText,
+            style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+          ),
         ),
         TextButton(
           onPressed: () => Navigator.pop(ctx, true),
-          style: TextButton.styleFrom(foregroundColor: confirmColor),
-          child: Text(confirmText),
+          child: Text(
+            confirmText,
+            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+          ),
         ),
       ],
     ),

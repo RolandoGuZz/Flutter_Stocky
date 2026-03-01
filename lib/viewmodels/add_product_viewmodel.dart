@@ -1,4 +1,3 @@
-// lib/viewmodels/add_product_viewmodel.dart
 import 'package:flutter/material.dart';
 import '../models/product.dart';
 import '../services/hive_service.dart';
@@ -6,17 +5,14 @@ import '../services/hive_service.dart';
 class AddProductViewModel extends ChangeNotifier {
   final HiveService _hiveService;
 
-  // Estados del formulario
   String _name = '';
   int _quantity = 1;
-  DateTime _expiryDate = DateTime.now().add(const Duration(days: 7));
+  DateTime _expiryDate = DateTime.now();
   String _description = '';
 
-  // Estados de UI
   bool _isLoading = false;
   String? _errorMessage;
 
-  // Getters para la View
   String get name => _name;
   int get quantity => _quantity;
   DateTime get expiryDate => _expiryDate;

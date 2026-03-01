@@ -26,7 +26,7 @@ class ProductIcon extends StatelessWidget {
       width: 50,
       height: 50,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Icon(_getIcon(), color: color),

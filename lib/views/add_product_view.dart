@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:stocky/widgets/custom_text_field.dart';
+import 'package:stocky/widgets/date_piecker_field.dart';
+import 'package:stocky/widgets/error_message.dart';
+import 'package:stocky/widgets/form_action_buttons.dart';
+import 'package:stocky/widgets/label_widget.dart';
+import 'package:stocky/widgets/page_header_icon.dart';
+import 'package:stocky/widgets/quantity_selector.dart';
 import '../../viewmodels/add_product_viewmodel.dart';
 import '../../services/hive_service.dart';
 
@@ -17,197 +24,131 @@ class AddProductView extends StatelessWidget {
   }
 }
 
-class AddProductContent extends StatelessWidget {
+class AddProductContent extends StatefulWidget {
   const AddProductContent({super.key});
+
+  @override
+  State<AddProductContent> createState() => _AddProductContentState();
+}
+
+class _AddProductContentState extends State<AddProductContent> {
+  final _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<AddProductViewModel>();
 
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('Añadir Producto'),
-        backgroundColor: Colors.green[700],
+        centerTitle: true,
+        title: Text(
+          'Añadir Producto',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+        ),
+        backgroundColor: Colors.green,
         foregroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: vm.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(20),
-              child: ListView(
-                children: [
-                  const Text(
-                    'NOMBRE DEL PRODUCTO',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    onChanged: vm.updateName,
-                    decoration: const InputDecoration(
-                      hintText: 'Ej. Manzanas rojas',
-                      border: OutlineInputBorder(),
+          ? Center(child: CircularProgressIndicator(color: Colors.green))
+          : SingleChildScrollView(
+              padding: EdgeInsets.all(20),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    PageHeaderIcon(
+                      icon: Icons.add_shopping_cart,
+                      color: Colors.green,
                     ),
-                  ),
-                  const SizedBox(height: 20),
+                    SizedBox(height: 24),
 
-                  const Text(
-                    'CANTIDAD',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    height: 50,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(8),
+                    LabelWidget(text: 'NOMBRE DEL PRODUCTO'),
+                    SizedBox(height: 8),
+                    CustomTextField(
+                      hint: 'Ej. Manzanas rojas',
+                      onChanged: vm.updateName,
+                      prefixIcon: Icons.shopping_bag_outlined,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Este campo es obligatorio';
+                        }
+                        return null;
+                      },
                     ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: IconButton(
-                            icon: const Icon(Icons.remove),
-                            onPressed: vm.decrementQuantity,
-                          ),
-                        ),
-                        Text(
-                          '${vm.quantity}',
-                          style: const TextStyle(fontSize: 20),
-                        ),
-                        Expanded(
-                          child: IconButton(
-                            icon: const Icon(Icons.add),
-                            onPressed: vm.incrementQuantity,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
+                    SizedBox(height: 20),
 
-                  const Text(
-                    'FECHA DE VENCIMIENTO',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  InkWell(
-                    onTap: () async {
-                      final date = await showDatePicker(
-                        context: context,
-                        initialDate: vm.expiryDate,
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime.now().add(const Duration(days: 365)),
-                      );
-                      if (date != null) {
-                        vm.updateExpiryDate(date);
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(15),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            '${vm.expiryDate.day}/${vm.expiryDate.month}/${vm.expiryDate.year}',
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                          const Icon(Icons.calendar_today),
-                        ],
-                      ),
+                    LabelWidget(text: 'CANTIDAD'),
+                    SizedBox(height: 8),
+                    QuantitySelector(
+                      quantity: vm.quantity,
+                      onIncrement: vm.incrementQuantity,
+                      onDecrement: vm.decrementQuantity,
                     ),
-                  ),
-                  const SizedBox(height: 20),
+                    SizedBox(height: 20),
 
-                  const Text(
-                    'DESCRIPCIÓN (OPCIONAL)',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    onChanged: vm.updateDescription,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      hintText: 'Notas adicionales...',
-                      border: OutlineInputBorder(),
+                    LabelWidget(text: 'FECHA DE VENCIMIENTO'),
+                    SizedBox(height: 8),
+                    DatePickerField(
+                      selectedDate: vm.expiryDate,
+                      onDateSelected: vm.updateExpiryDate,
                     ),
-                  ),
-                  const SizedBox(height: 20),
+                    SizedBox(height: 20),
 
-                  if (vm.errorMessage != null) ...[
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade50,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        vm.errorMessage!,
-                        style: TextStyle(color: Colors.red.shade700),
-                      ),
+                    LabelWidget(text: 'DESCRIPCIÓN (OPCIONAL)'),
+                    SizedBox(height: 8),
+                    CustomTextField(
+                      hint: 'Notas adicionales...',
+                      onChanged: vm.updateDescription,
+                      maxLines: 4,
+                      isOptional: true,
+                    ),
+                    SizedBox(height: 20),
+
+                    if (vm.errorMessage != null) ...[
+                      ErrorMessage(message: vm.errorMessage!),
+                      SizedBox(height: 20),
+                    ],
+
+                    FormActionButtons(
+                      onCancel: () {
+                        vm.resetForm();
+                        Navigator.pop(context);
+                      },
+                      onSave: () async {
+                        if (_formKey.currentState!.validate()) {
+                          final success = await vm.saveProduct();
+                          if (success && context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.check_circle,
+                                      color: Colors.white,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text('Producto guardado'),
+                                  ],
+                                ),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                            Navigator.pop(context, true);
+                          }
+                        }
+                      },
+                      isLoading: vm.isLoading,
                     ),
                     const SizedBox(height: 20),
                   ],
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            vm.resetForm();
-                            Navigator.pop(context);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red[700],
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                          ),
-                          child: const Text(
-                            'Cancelar',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            final success = await vm.saveProduct();
-                            if (success && context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Producto guardado'),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
-                              Navigator.pop(context, true);
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green[700],
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                          ),
-                          child: vm.isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text(
-                                  'Guardar',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ),
             ),
     );

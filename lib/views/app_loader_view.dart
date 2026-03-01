@@ -3,14 +3,14 @@ import 'package:stocky/services/hive_service.dart';
 import 'package:stocky/views/home_view.dart';
 import 'package:stocky/views/welcome_view.dart';
 
-class AppLoader extends StatefulWidget {
-  const AppLoader({super.key});
+class AppLoaderView extends StatefulWidget {
+  const AppLoaderView({super.key});
 
   @override
-  State<AppLoader> createState() => _AppLoaderState();
+  State<AppLoaderView> createState() => _AppLoaderViewtate();
 }
 
-class _AppLoaderState extends State<AppLoader> {
+class _AppLoaderViewtate extends State<AppLoaderView> {
   late HiveService _hiveService;
   bool _isLoading = true;
   String? _userName;

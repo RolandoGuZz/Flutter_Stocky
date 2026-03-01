@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stocky/models/product.dart';
 import 'package:stocky/views/add_product_view.dart';
+import 'package:stocky/views/update_product_view.dart';
 import 'package:stocky/widgets/bottom_navbar.dart';
 import '../../viewmodels/home_viewmodel.dart';
 import '../../widgets/section_header.dart';
@@ -42,18 +43,14 @@ class HomeView extends StatelessWidget {
               actions: [
                 IconButton(
                   icon: const Icon(Icons.search, color: Colors.white),
-                  onPressed: () {
-                    // TODO: Implementar búsqueda
-                  },
+                  onPressed: () {},
                 ),
                 IconButton(
                   icon: const Icon(
                     Icons.notifications_none,
                     color: Colors.white,
                   ),
-                  onPressed: () {
-                    // TODO: Implementar notificaciones
-                  },
+                  onPressed: () {},
                 ),
               ],
             ),
@@ -79,9 +76,9 @@ class HomeView extends StatelessWidget {
                               product: p,
                               color: vm.getExpiryColor(p),
                               onDelete: () => _confirmAndDelete(context, vm, p),
-                              onEdit: () {
-                                // TODO: Implementar edición
-                              },
+                              onEdit: () =>
+                                  _navigateToUpdateProduct(context, vm),
+                              onMarkUsed: () {},
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -98,9 +95,8 @@ class HomeView extends StatelessWidget {
                               product: p,
                               color: vm.getExpiryColor(p),
                               onDelete: () => _confirmAndDelete(context, vm, p),
-                              onEdit: () {
-                                // TODO: Implementar edición
-                              },
+                              onEdit: () =>
+                                  _navigateToUpdateProduct(context, vm),
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -117,9 +113,8 @@ class HomeView extends StatelessWidget {
                               product: p,
                               color: vm.getExpiryColor(p),
                               onDelete: () => _confirmAndDelete(context, vm, p),
-                              onEdit: () {
-                                // TODO: Implementar edición
-                              },
+                              onEdit: () =>
+                                  _navigateToUpdateProduct(context, vm),
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -146,12 +141,16 @@ class HomeView extends StatelessWidget {
             floatingActionButton: FloatingActionButton(
               onPressed: () => _navigateToAddProduct(context, vm),
               backgroundColor: Colors.green,
-              child: const Icon(Icons.add),
+              child: const Icon(
+                Icons.add,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
 
             bottomNavigationBar: BottomNavbar(
               currentIndex: vm.selectedIndex,
-              onTap: vm.changeTab,
+              onTap: (index) => vm.changeTab(index, context),
               selectedColor: Colors.green,
               unselectedColor: Colors.grey,
             ),
@@ -161,15 +160,42 @@ class HomeView extends StatelessWidget {
     );
   }
 
+  // Future<void> _navigateToAddProduct(
+  //   BuildContext context,
+  //   HomeViewModel vm,
+  // ) async {
+  //   await Navigator.push(
+  //     context,
+  //     MaterialPageRoute(
+  //       builder: (_) => AddProductView(hiveService: hiveService),
+  //     ),
+  //   );
+  // }
+
   Future<void> _navigateToAddProduct(
+    BuildContext context,
+    HomeViewModel vm,
+  ) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddProductView(hiveService: hiveService),
+      ),
+    );
+
+    // 👇 ESTO ES LO QUE FALTA - RECARGAR CUANDO REGRESA
+    if (result == true && context.mounted) {
+      await vm.loadProducts();
+    }
+  }
+
+  Future<void> _navigateToUpdateProduct(
     BuildContext context,
     HomeViewModel vm,
   ) async {
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => AddProductView(hiveService: hiveService),
-      ),
+      MaterialPageRoute(builder: (_) => UpdateProductView()),
     );
   }
 
@@ -180,10 +206,9 @@ class HomeView extends StatelessWidget {
   ) async {
     final confirmed = await showConfirmationDialog(
       context: context,
-      title: 'Eliminar producto',
+      title: 'Eliminar Producto',
       content: '¿Eliminar ${product.name} de tu despensa?',
     );
-
     if (confirmed == true && context.mounted) {
       final success = await vm.deleteProduct(product);
       if (success && context.mounted) {

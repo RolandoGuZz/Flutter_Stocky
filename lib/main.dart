@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:stocky/views/app_loader.dart';
+import 'package:stocky/views/app_loader_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Stocky',
       theme: ThemeData(primarySwatch: Colors.green, useMaterial3: true),
-      home: const AppLoader(),
+      home: const AppLoaderView(),
       debugShowCheckedModeBanner: false,
     );
   }
