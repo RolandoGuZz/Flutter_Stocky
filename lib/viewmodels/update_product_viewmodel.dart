@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import '../models/product.dart';
 import '../services/hive_service.dart';
 
-class AddProductViewModel extends ChangeNotifier {
+class UpdateProductViewModel extends ChangeNotifier {
   final HiveService _hiveService;
+  final Product _originalProduct;
 
-  String _name = '';
-  int _quantity = 1;
-  DateTime _expiryDate = DateTime.now();
-  String _description = '';
+  late String _name;
+  late int _quantity;
+  late DateTime _expiryDate;
+  late String _description;
 
   bool _isLoading = false;
   String? _errorMessage;
@@ -20,8 +21,19 @@ class AddProductViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isFormValid => _name.trim().isNotEmpty && _quantity > 0;
+  bool get hasChanges {
+    return _name != _originalProduct.name ||
+        _quantity != _originalProduct.quantity ||
+        _expiryDate != _originalProduct.expiryDate ||
+        _description != (_originalProduct.description ?? '');
+  }
 
-  AddProductViewModel(this._hiveService);
+  UpdateProductViewModel(this._hiveService, this._originalProduct) {
+    _name = _originalProduct.name;
+    _quantity = _originalProduct.quantity;
+    _expiryDate = _originalProduct.expiryDate;
+    _description = _originalProduct.description ?? '';
+  }
 
   void updateName(String value) {
     _name = value;
@@ -55,9 +67,15 @@ class AddProductViewModel extends ChangeNotifier {
     }
   }
 
-  Future<bool> saveProduct() async {
+  Future<bool> updateProduct() async {
     if (!isFormValid) {
-      _errorMessage = 'Nombre y cantidad son obligatorios';
+      _errorMessage = 'El nombre es obligatorio';
+      notifyListeners();
+      return false;
+    }
+
+    if (!hasChanges) {
+      _errorMessage = 'No hay cambios para guardar';
       notifyListeners();
       return false;
     }
@@ -67,32 +85,43 @@ class AddProductViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final product = Product.create(
+      final updatedProduct = Product(
+        id: _originalProduct.id,
         name: _name,
         quantity: _quantity,
         expiryDate: _expiryDate,
         description: _description.isEmpty ? null : _description,
+        isExpired: _expiryDate.isBefore(DateTime.now()),
+        createdAt: _originalProduct.createdAt,
       );
 
-      await _hiveService.addProduct(product);
+      await _hiveService.updateProduct(updatedProduct);
 
       _isLoading = false;
       notifyListeners();
       return true;
     } catch (e) {
       _isLoading = false;
-      _errorMessage = 'Error al guardar: $e';
+      _errorMessage = 'Error al actualizar: $e';
       notifyListeners();
       return false;
     }
   }
 
-  void resetForm() {
-    _name = '';
-    _quantity = 1;
-    _expiryDate = DateTime.now().add(const Duration(days: 7));
-    _description = '';
-    _errorMessage = null;
+  Future<bool> deleteProduct() async {
+    _isLoading = true;
     notifyListeners();
+
+    try {
+      await _hiveService.deleteProduct(_originalProduct.id);
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = 'Error al eliminar';
+      notifyListeners();
+      return false;
+    }
   }
 }

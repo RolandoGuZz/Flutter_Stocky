@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:stocky/models/product.dart';
 import 'package:stocky/views/add_product_view.dart';
 import 'package:stocky/views/update_product_view.dart';
-import 'package:stocky/widgets/bottom_navbar.dart';
+import '../../models/product.dart';
 import '../../viewmodels/home_viewmodel.dart';
+import '../../services/hive_service.dart';
 import '../../widgets/section_header.dart';
 import '../../widgets/product_card.dart';
 import '../../widgets/empty_state.dart';
-import '../../widgets/confirmation_dialog.dart';
-import '../../services/hive_service.dart';
+import '../../widgets/bottom_navbar.dart';
 
 class HomeView extends StatelessWidget {
   final String userName;
@@ -32,7 +31,7 @@ class HomeView extends StatelessWidget {
             appBar: AppBar(
               title: Text(
                 'Stocky',
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 26,
@@ -42,20 +41,17 @@ class HomeView extends StatelessWidget {
               elevation: 0,
               actions: [
                 IconButton(
-                  icon: const Icon(Icons.search, color: Colors.white),
+                  icon: Icon(Icons.search, color: Colors.white),
                   onPressed: () {},
                 ),
                 IconButton(
-                  icon: const Icon(
-                    Icons.notifications_none,
-                    color: Colors.white,
-                  ),
+                  icon: Icon(Icons.notifications_none, color: Colors.white),
                   onPressed: () {},
                 ),
               ],
             ),
             body: vm.isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? Center(child: CircularProgressIndicator())
                 : !vm.hasProducts
                 ? EmptyState(
                     onAddPressed: () => _navigateToAddProduct(context, vm),
@@ -63,10 +59,10 @@ class HomeView extends StatelessWidget {
                 : RefreshIndicator(
                     onRefresh: vm.refresh,
                     child: ListView(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(16),
                       children: [
                         if (vm.urgentProducts.isNotEmpty) ...[
-                          const SectionHeader(
+                          SectionHeader(
                             title: 'URGENTE',
                             subtitle: '1-2 DÍAS',
                             color: Colors.red,
@@ -75,17 +71,14 @@ class HomeView extends StatelessWidget {
                             (p) => ProductCard(
                               product: p,
                               color: vm.getExpiryColor(p),
-                              onDelete: () => _confirmAndDelete(context, vm, p),
-                              onEdit: () =>
-                                  _navigateToUpdateProduct(context, vm),
-                              onMarkUsed: () {},
+                              onTap: () =>
+                                  _navigateToUpdateProduct(context, vm, p),
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          SizedBox(height: 16),
                         ],
-
                         if (vm.soonProducts.isNotEmpty) ...[
-                          const SectionHeader(
+                          SectionHeader(
                             title: 'PRÓXIMOS',
                             subtitle: '3-7 DÍAS',
                             color: Colors.orange,
@@ -94,16 +87,14 @@ class HomeView extends StatelessWidget {
                             (p) => ProductCard(
                               product: p,
                               color: vm.getExpiryColor(p),
-                              onDelete: () => _confirmAndDelete(context, vm, p),
-                              onEdit: () =>
-                                  _navigateToUpdateProduct(context, vm),
+                              onTap: () =>
+                                  _navigateToUpdateProduct(context, vm, p),
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          SizedBox(height: 16),
                         ],
-
                         if (vm.stableProducts.isNotEmpty) ...[
-                          const SectionHeader(
+                          SectionHeader(
                             title: 'ESTABLES',
                             subtitle: '+1 SEMANA',
                             color: Colors.green,
@@ -112,16 +103,14 @@ class HomeView extends StatelessWidget {
                             (p) => ProductCard(
                               product: p,
                               color: vm.getExpiryColor(p),
-                              onDelete: () => _confirmAndDelete(context, vm, p),
-                              onEdit: () =>
-                                  _navigateToUpdateProduct(context, vm),
+                              onTap: () =>
+                                  _navigateToUpdateProduct(context, vm, p),
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          SizedBox(height: 16),
                         ],
-
                         if (vm.expiredProducts.isNotEmpty) ...[
-                          const SectionHeader(
+                          SectionHeader(
                             title: 'VENCIDOS',
                             subtitle: 'CONSUMIR YA',
                             color: Colors.grey,
@@ -130,24 +119,19 @@ class HomeView extends StatelessWidget {
                             (p) => ProductCard(
                               product: p,
                               color: Colors.grey,
-                              onDelete: () => _confirmAndDelete(context, vm, p),
+                              onTap: () =>
+                                  _navigateToUpdateProduct(context, vm, p),
                             ),
                           ),
                         ],
                       ],
                     ),
                   ),
-
             floatingActionButton: FloatingActionButton(
               onPressed: () => _navigateToAddProduct(context, vm),
               backgroundColor: Colors.green,
-              child: const Icon(
-                Icons.add,
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+              child: Icon(Icons.add, color: Colors.white),
             ),
-
             bottomNavigationBar: BottomNavbar(
               currentIndex: vm.selectedIndex,
               onTap: (index) => vm.changeTab(index, context),
@@ -160,18 +144,6 @@ class HomeView extends StatelessWidget {
     );
   }
 
-  // Future<void> _navigateToAddProduct(
-  //   BuildContext context,
-  //   HomeViewModel vm,
-  // ) async {
-  //   await Navigator.push(
-  //     context,
-  //     MaterialPageRoute(
-  //       builder: (_) => AddProductView(hiveService: hiveService),
-  //     ),
-  //   );
-  // }
-
   Future<void> _navigateToAddProduct(
     BuildContext context,
     HomeViewModel vm,
@@ -183,7 +155,6 @@ class HomeView extends StatelessWidget {
       ),
     );
 
-    // 👇 ESTO ES LO QUE FALTA - RECARGAR CUANDO REGRESA
     if (result == true && context.mounted) {
       await vm.loadProducts();
     }
@@ -192,33 +163,18 @@ class HomeView extends StatelessWidget {
   Future<void> _navigateToUpdateProduct(
     BuildContext context,
     HomeViewModel vm,
-  ) async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => UpdateProductView()),
-    );
-  }
-
-  Future<void> _confirmAndDelete(
-    BuildContext context,
-    HomeViewModel vm,
     Product product,
   ) async {
-    final confirmed = await showConfirmationDialog(
-      context: context,
-      title: 'Eliminar Producto',
-      content: '¿Eliminar ${product.name} de tu despensa?',
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            UpdateProductView(hiveService: hiveService, product: product),
+      ),
     );
-    if (confirmed == true && context.mounted) {
-      final success = await vm.deleteProduct(product);
-      if (success && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${product.name} eliminado'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+
+    if (result == true && context.mounted) {
+      await vm.loadProducts();
     }
   }
 }
