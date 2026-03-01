@@ -126,7 +126,7 @@ class _AddProductContentState extends State<AddProductContent> {
                           final success = await vm.saveProduct();
                           if (success && context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
+                              SnackBar(
                                 content: Row(
                                   children: [
                                     Icon(
@@ -146,7 +146,7 @@ class _AddProductContentState extends State<AddProductContent> {
                       },
                       isLoading: vm.isLoading,
                     ),
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20),
                   ],
                 ),
               ),

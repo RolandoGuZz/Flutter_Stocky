@@ -52,7 +52,7 @@ class ProductCard extends StatelessWidget {
                   ),
                   SizedBox(width: 4),
                   Text(
-                    'Cantidad: ${product.quantity}}',
+                    'Cantidad: ${product.quantity}',
                     style: TextStyle(color: Colors.grey[600], fontSize: 13),
                   ),
                 ],

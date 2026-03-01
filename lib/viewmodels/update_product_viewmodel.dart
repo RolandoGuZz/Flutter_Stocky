@@ -67,6 +67,28 @@ class UpdateProductViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> markAsUsed() async {
+    if (_quantity > 1) {
+      _quantity--;
+
+      final updatedProduct = Product(
+        id: _originalProduct.id,
+        name: _name,
+        quantity: _quantity,
+        expiryDate: _expiryDate,
+        description: _description.isEmpty ? null : _description,
+        isExpired: _expiryDate.isBefore(DateTime.now()),
+        createdAt: _originalProduct.createdAt,
+      );
+
+      await _hiveService.updateProduct(updatedProduct);
+    } else {
+      await _hiveService.deleteProduct(_originalProduct.id);
+    }
+
+    notifyListeners();
+  }
+
   Future<bool> updateProduct() async {
     if (!isFormValid) {
       _errorMessage = 'El nombre es obligatorio';

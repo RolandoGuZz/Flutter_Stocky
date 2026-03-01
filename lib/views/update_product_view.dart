@@ -158,8 +158,32 @@ class _UpdateProductContentState extends State<UpdateProductContent> {
                     SizedBox(height: 20),
                     Center(
                       child: ElevatedButton.icon(
-                        onPressed: () {},
-                        icon: Icon(Icons.check, fontWeight: FontWeight.bold, size: 20,),
+                        onPressed: () {
+                          vm.markAsUsed();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.check_circle,
+                                      color: Colors.white,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text('Producto usado'),
+                                  ],
+                                ),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          }
+                          Navigator.pop(context, true);
+                        },
+                        icon: Icon(
+                          Icons.check,
+                          fontWeight: FontWeight.bold,
+                          size: 20,
+                        ),
                         label: Text(
                           "Marcar como usado",
                           style: TextStyle(
