@@ -15,6 +15,7 @@ class HiveService {
     // Registrar adaptadores
     Hive.registerAdapter(UserPreferencesAdapter());
     Hive.registerAdapter(ProductAdapter());
+    Hive.registerAdapter(ProductTypeAdapter());
 
     // Abrir cajas
     _userBoxInstance = await Hive.openBox<UserPreferences>(_userBox);

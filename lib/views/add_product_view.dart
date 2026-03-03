@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:stocky/models/product.dart';
 import 'package:stocky/widgets/custom_text_field.dart';
 import 'package:stocky/widgets/date_piecker_field.dart';
 import 'package:stocky/widgets/error_message.dart';
 import 'package:stocky/widgets/form_action_buttons.dart';
 import 'package:stocky/widgets/label_widget.dart';
+import 'package:stocky/widgets/liquid_quantity_slider.dart';
 import 'package:stocky/widgets/page_header_icon.dart';
 import 'package:stocky/widgets/quantity_selector.dart';
 import '../../viewmodels/add_product_viewmodel.dart';
@@ -84,13 +86,57 @@ class _AddProductContentState extends State<AddProductContent> {
                     ),
                     SizedBox(height: 20),
 
-                    LabelWidget(text: 'CANTIDAD'),
+                    LabelWidget(text: 'TIPO DE PRODUCTO'),
                     SizedBox(height: 8),
-                    QuantitySelector(
-                      quantity: vm.quantity,
-                      onIncrement: vm.incrementQuantity,
-                      onDecrement: vm.decrementQuantity,
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _buildTypeOption(
+                              context: context,
+                              type: ProductType.solid,
+                              icon: Icons.inventory_2,
+                              label: 'Sólido',
+                              isSelected: vm.selectedType == ProductType.solid,
+                              onTap: () => vm.setProductType(ProductType.solid),
+                            ),
+                          ),
+                          Expanded(
+                            child: _buildTypeOption(
+                              context: context,
+                              type: ProductType.liquid,
+                              icon: Icons.water_drop,
+                              label: 'Líquido',
+                              isSelected: vm.selectedType == ProductType.liquid,
+                              onTap: () =>
+                                  vm.setProductType(ProductType.liquid),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                    SizedBox(height: 20),
+                    if (vm.isLiquid) ...[
+                      LabelWidget(text: 'CANTIDAD (LITROS)'),
+                      SizedBox(height: 8),
+                      LiquidQuantitySlider(
+                        value: vm.liquidQuantity,
+                        onChanged: vm.updateLiquidQuantity,
+                      ),
+                    ] else ...[
+                      LabelWidget(text: 'CANTIDAD (UNIDADES)'),
+                      SizedBox(height: 8),
+                      QuantitySelector(
+                        quantity: vm.quantity,
+                        onIncrement: vm.incrementQuantity,
+                        onDecrement: vm.decrementQuantity,
+                      ),
+                    ],
                     SizedBox(height: 20),
 
                     LabelWidget(text: 'FECHA DE VENCIMIENTO'),
@@ -153,4 +199,45 @@ class _AddProductContentState extends State<AddProductContent> {
             ),
     );
   }
+}
+
+Widget _buildTypeOption({
+  required BuildContext context,
+  required ProductType type,
+  required IconData icon,
+  required String label,
+  required bool isSelected,
+  required VoidCallback onTap,
+}) {
+  return GestureDetector(
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? Colors.green.withValues(alpha: 0.1)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        border: Border(
+          right: type == ProductType.solid
+              ? BorderSide(color: Colors.grey.shade300)
+              : BorderSide.none,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: isSelected ? Colors.green : Colors.grey),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? Colors.green : Colors.grey,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }

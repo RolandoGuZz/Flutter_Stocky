@@ -81,29 +81,19 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
-  // Marcar como usado
-  Future<bool> markAsUsed(Product product) async {
-    return false;
-  }
-
   // Cambiar pestaña del bottom nav
-  // Agrega el BuildContext como parámetro
   void changeTab(int index, BuildContext context) {
     _selectedIndex = index;
     notifyListeners();
 
-    // Navegar según el índice seleccionado
     switch (index) {
-      case 0: // Inicio - ya estamos aquí
-        // No hacer nada o recargar
+      case 0:
         break;
-
-      case 1: // Lista de compras
+      case 1:
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const ShoppingListView()),
         ).then((_) {
-          // Cuando regrese de la lista, restaurar el índice a 0
           _selectedIndex = 0;
           notifyListeners();
         });

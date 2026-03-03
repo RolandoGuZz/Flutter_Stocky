@@ -8,6 +8,8 @@ class UpdateProductViewModel extends ChangeNotifier {
 
   late String _name;
   late int _quantity;
+  late double _liquidQuantity;
+  late ProductType _type;
   late DateTime _expiryDate;
   late String _description;
 
@@ -16,14 +18,19 @@ class UpdateProductViewModel extends ChangeNotifier {
 
   String get name => _name;
   int get quantity => _quantity;
+  double get liquidQuantity => _liquidQuantity;
+  ProductType get type => _type;
+  bool get isLiquid => _type == ProductType.liquid;
   DateTime get expiryDate => _expiryDate;
   String get description => _description;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
-  bool get isFormValid => _name.trim().isNotEmpty && _quantity > 0;
+  bool get isFormValid => _name.trim().isNotEmpty;
   bool get hasChanges {
     return _name != _originalProduct.name ||
         _quantity != _originalProduct.quantity ||
+        _liquidQuantity != _originalProduct.liquidQuantity ||
+        _type != _originalProduct.type ||
         _expiryDate != _originalProduct.expiryDate ||
         _description != (_originalProduct.description ?? '');
   }
@@ -31,6 +38,8 @@ class UpdateProductViewModel extends ChangeNotifier {
   UpdateProductViewModel(this._hiveService, this._originalProduct) {
     _name = _originalProduct.name;
     _quantity = _originalProduct.quantity;
+    _liquidQuantity = _originalProduct.liquidQuantity;
+    _type = _originalProduct.type;
     _expiryDate = _originalProduct.expiryDate;
     _description = _originalProduct.description ?? '';
   }
@@ -42,6 +51,16 @@ class UpdateProductViewModel extends ChangeNotifier {
 
   void updateQuantity(int value) {
     _quantity = value;
+    notifyListeners();
+  }
+
+  void updateLiquidQuantity(double value) {
+    _liquidQuantity = value;
+    notifyListeners();
+  }
+
+  void setProductType(ProductType type) {
+    _type = type;
     notifyListeners();
   }
 
@@ -68,24 +87,37 @@ class UpdateProductViewModel extends ChangeNotifier {
   }
 
   Future<void> markAsUsed() async {
-    if (_quantity > 1) {
-      _quantity--;
-
-      final updatedProduct = Product(
-        id: _originalProduct.id,
-        name: _name,
-        quantity: _quantity,
-        expiryDate: _expiryDate,
-        description: _description.isEmpty ? null : _description,
-        isExpired: _expiryDate.isBefore(DateTime.now()),
-        createdAt: _originalProduct.createdAt,
-      );
-
-      await _hiveService.updateProduct(updatedProduct);
+    if (_type == ProductType.liquid) {
+      if (_liquidQuantity > 0.5) {
+        _liquidQuantity -= 0.5;
+      } else {
+        await _hiveService.deleteProduct(_originalProduct.id);
+        notifyListeners();
+        return;
+      }
     } else {
-      await _hiveService.deleteProduct(_originalProduct.id);
+      if (_quantity > 1) {
+        _quantity--;
+      } else {
+        await _hiveService.deleteProduct(_originalProduct.id);
+        notifyListeners();
+        return;
+      }
     }
 
+    final updatedProduct = Product(
+      id: _originalProduct.id,
+      name: _name,
+      quantity: _type == ProductType.solid ? _quantity : 0,
+      liquidQuantity: _type == ProductType.liquid ? _liquidQuantity : 0.0,
+      type: _type,
+      expiryDate: _expiryDate,
+      description: _description.isEmpty ? null : _description,
+      isExpired: _expiryDate.isBefore(DateTime.now()),
+      createdAt: _originalProduct.createdAt,
+    );
+
+    await _hiveService.updateProduct(updatedProduct);
     notifyListeners();
   }
 
@@ -110,7 +142,9 @@ class UpdateProductViewModel extends ChangeNotifier {
       final updatedProduct = Product(
         id: _originalProduct.id,
         name: _name,
-        quantity: _quantity,
+        quantity: _type == ProductType.solid ? _quantity : 0,
+        liquidQuantity: _type == ProductType.liquid ? _liquidQuantity : 0.0,
+        type: _type,
         expiryDate: _expiryDate,
         description: _description.isEmpty ? null : _description,
         isExpired: _expiryDate.isBefore(DateTime.now()),

@@ -13,6 +13,9 @@ class AddProductViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
 
+  ProductType _selectedType = ProductType.solid;
+  double _liquidQuantity = 1.0;
+
   String get name => _name;
   int get quantity => _quantity;
   DateTime get expiryDate => _expiryDate;
@@ -20,6 +23,9 @@ class AddProductViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isFormValid => _name.trim().isNotEmpty && _quantity > 0;
+  ProductType get selectedType => _selectedType;
+  double get liquidQuantity => _liquidQuantity;
+  bool get isLiquid => _selectedType == ProductType.liquid;
 
   AddProductViewModel(this._hiveService);
 
@@ -55,6 +61,16 @@ class AddProductViewModel extends ChangeNotifier {
     }
   }
 
+  void setProductType(ProductType type) {
+    _selectedType = type;
+    notifyListeners();
+  }
+
+  void updateLiquidQuantity(double value) {
+    _liquidQuantity = value;
+    notifyListeners();
+  }
+
   Future<bool> saveProduct() async {
     if (!isFormValid) {
       _errorMessage = 'Nombre y cantidad son obligatorios';
@@ -69,7 +85,11 @@ class AddProductViewModel extends ChangeNotifier {
     try {
       final product = Product.create(
         name: _name,
-        quantity: _quantity,
+        quantity: _selectedType == ProductType.solid ? _quantity : 0,
+        liquidQuantity: _selectedType == ProductType.liquid
+            ? _liquidQuantity
+            : 0.0,
+        type: _selectedType,
         expiryDate: _expiryDate,
         description: _description.isEmpty ? null : _description,
       );
