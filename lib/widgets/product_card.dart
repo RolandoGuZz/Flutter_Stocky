@@ -24,6 +24,20 @@ class ProductCard extends StatelessWidget {
     return '${date.day}/${date.month}/${date.year}';
   }
 
+  String _getQuantityText() {
+    if (product.type == ProductType.liquid) {
+      return 'Cantidad: ${product.liquidQuantity.toStringAsFixed(1)} L';
+    } else {
+      return 'Cantidad: ${product.quantity} ${product.description ?? 'ud.'}';
+    }
+  }
+
+  IconData _getQuantityIcon() {
+    return product.type == ProductType.liquid
+        ? Icons.water_drop
+        : Icons.production_quantity_limits;
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -45,23 +59,19 @@ class ProductCard extends StatelessWidget {
               SizedBox(height: 4),
               Row(
                 children: [
-                  Icon(
-                    Icons.production_quantity_limits,
-                    size: 14,
-                    color: Colors.grey[600],
-                  ),
+                  Icon(_getQuantityIcon(), size: 14, color: Colors.grey[600]),
                   SizedBox(width: 4),
                   Text(
-                    'Cantidad: ${product.quantity}',
+                    _getQuantityText(),
                     style: TextStyle(color: Colors.grey[600], fontSize: 13),
                   ),
                 ],
               ),
-              const SizedBox(height: 2),
+              SizedBox(height: 2),
               Row(
                 children: [
                   Icon(Icons.calendar_today, size: 14, color: color),
-                  const SizedBox(width: 4),
+                  SizedBox(width: 4),
                   Text(
                     'Caduca: ${_formatDate(product.expiryDate)}',
                     style: TextStyle(color: color, fontSize: 13),
