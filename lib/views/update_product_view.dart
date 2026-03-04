@@ -7,6 +7,7 @@ import 'package:stocky/widgets/date_piecker_field.dart';
 import 'package:stocky/widgets/error_message.dart';
 import 'package:stocky/widgets/form_action_buttons.dart';
 import 'package:stocky/widgets/label_widget.dart';
+import 'package:stocky/widgets/liquid_quantity_slider.dart';
 import 'package:stocky/widgets/page_header_icon.dart';
 import 'package:stocky/widgets/quantity_selector.dart';
 import '../../services/hive_service.dart';
@@ -44,6 +45,7 @@ class _UpdateProductContentState extends State<UpdateProductContent> {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<UpdateProductViewModel>();
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -78,6 +80,40 @@ class _UpdateProductContentState extends State<UpdateProductContent> {
                     PageHeaderIcon(icon: Icons.edit, color: Colors.green),
                     SizedBox(height: 24),
 
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: vm.isLiquid
+                            ? Colors.blue.withValues(alpha: 0.1)
+                            : Colors.orange.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            vm.isLiquid ? Icons.water_drop : Icons.inventory_2,
+                            size: 16,
+                            color: vm.isLiquid ? Colors.blue : Colors.orange,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            vm.isLiquid
+                                ? 'Producto Líquido'
+                                : 'Producto Sólido',
+                            style: TextStyle(
+                              color: vm.isLiquid ? Colors.blue : Colors.orange,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 20),
+
                     LabelWidget(text: 'NOMBRE DEL PRODUCTO'),
                     SizedBox(height: 8),
                     CustomTextField(
@@ -94,13 +130,22 @@ class _UpdateProductContentState extends State<UpdateProductContent> {
                     ),
                     SizedBox(height: 20),
 
-                    LabelWidget(text: 'CANTIDAD'),
-                    SizedBox(height: 8),
-                    QuantitySelector(
-                      quantity: vm.quantity,
-                      onIncrement: vm.incrementQuantity,
-                      onDecrement: vm.decrementQuantity,
-                    ),
+                    if (vm.isLiquid) ...[
+                      LabelWidget(text: 'CANTIDAD (LITROS)'),
+                      SizedBox(height: 8),
+                      LiquidQuantitySlider(
+                        value: vm.liquidQuantity,
+                        onChanged: vm.updateLiquidQuantity,
+                      ),
+                    ] else ...[
+                      LabelWidget(text: 'CANTIDAD (UNIDADES)'),
+                      SizedBox(height: 8),
+                      QuantitySelector(
+                        quantity: vm.quantity,
+                        onIncrement: vm.incrementQuantity,
+                        onDecrement: vm.decrementQuantity,
+                      ),
+                    ],
                     SizedBox(height: 20),
 
                     LabelWidget(text: 'FECHA DE VENCIMIENTO'),
@@ -155,55 +200,56 @@ class _UpdateProductContentState extends State<UpdateProductContent> {
                       isLoading: vm.isLoading,
                       saveText: 'Actualizar',
                     ),
-                    SizedBox(height: 20),
-                    Center(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          vm.markAsUsed();
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.check_circle,
-                                      color: Colors.white,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Text('Producto usado'),
-                                  ],
+
+                    if (!vm.isLiquid) ...[
+                      SizedBox(height: 20),
+                      Center(
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            await vm.markAsUsed();
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.check_circle,
+                                        color: Colors.white,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text('${vm.name} marcado como usado'),
+                                    ],
+                                  ),
+                                  backgroundColor: Colors.green,
                                 ),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
-                          }
-                          Navigator.pop(context, true);
-                        },
-                        icon: Icon(
-                          Icons.check,
-                          fontWeight: FontWeight.bold,
-                          size: 20,
-                        ),
-                        label: Text(
-                          "Marcar como usado",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                              );
+                              Navigator.pop(context, true);
+                            }
+                          },
+                          icon: Icon(Icons.check, size: 20),
+                          label: Text(
+                            "Marcar como usado",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green.shade100,
-                          foregroundColor: Colors.green,
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 16,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green.shade100,
+                            foregroundColor: Colors.green,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 16,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                    ],
+
+                    SizedBox(height: 20),
                   ],
                 ),
               ),
