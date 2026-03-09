@@ -18,8 +18,8 @@ class ProductCard extends StatelessWidget {
     final now = DateTime.now();
     final difference = date.difference(now).inDays;
 
-    if (difference == 0) return 'Hoy';
-    if (difference == 1) return 'Mañana';
+    if (difference == 0) return 'Hoy'; // 1
+    if (difference == 1) return 'Mañana'; // 2 checar si es asi o se modifica
     if (difference == -1) return 'Ayer';
     return '${date.day}/${date.month}/${date.year}';
   }
@@ -28,7 +28,7 @@ class ProductCard extends StatelessWidget {
     if (product.type == ProductType.liquid) {
       return 'Cantidad: ${product.liquidQuantity.toStringAsFixed(1)} L';
     } else {
-      return 'Cantidad: ${product.quantity} ${product.description ?? 'ud.'}';
+      return 'Cantidad: ${product.quantity} ${product.description ?? 'UD'}';
     }
   }
 

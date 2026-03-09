@@ -90,21 +90,24 @@ class UpdateProductViewModel extends ChangeNotifier {
     if (_type == ProductType.liquid) {
       if (_liquidQuantity > 0.5) {
         _liquidQuantity -= 0.5;
+        await _updateProductInDb();
       } else {
+        await _hiveService.productFinished(_originalProduct);
         await _hiveService.deleteProduct(_originalProduct.id);
-        notifyListeners();
-        return;
       }
     } else {
       if (_quantity > 1) {
         _quantity--;
+        await _updateProductInDb();
       } else {
+        await _hiveService.productFinished(_originalProduct);
         await _hiveService.deleteProduct(_originalProduct.id);
-        notifyListeners();
-        return;
       }
     }
+    notifyListeners();
+  }
 
+  Future<void> _updateProductInDb() async {
     final updatedProduct = Product(
       id: _originalProduct.id,
       name: _name,
@@ -116,9 +119,7 @@ class UpdateProductViewModel extends ChangeNotifier {
       isExpired: _expiryDate.isBefore(DateTime.now()),
       createdAt: _originalProduct.createdAt,
     );
-
     await _hiveService.updateProduct(updatedProduct);
-    notifyListeners();
   }
 
   Future<bool> updateProduct() async {

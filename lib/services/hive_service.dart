@@ -1,13 +1,16 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:stocky/models/product.dart';
+import 'package:stocky/models/shopping_item.dart';
 import '../models/user_preferences.dart';
 
 class HiveService {
   static const String _userBox = 'user_preferences_box';
   static const String _productsBox = 'product_box';
+  static const String _shoppingBox = 'shopping_box';
 
   late Box<UserPreferences> _userBoxInstance;
   late Box<Product> _productsBoxInstance;
+  late Box<ShoppingItem> _shoppingBoxInstance;
 
   Future<void> init() async {
     await Hive.initFlutter();
@@ -16,10 +19,12 @@ class HiveService {
     Hive.registerAdapter(UserPreferencesAdapter());
     Hive.registerAdapter(ProductAdapter());
     Hive.registerAdapter(ProductTypeAdapter());
+    Hive.registerAdapter(ShoppingItemAdapter());
 
     // Abrir cajas
     _userBoxInstance = await Hive.openBox<UserPreferences>(_userBox);
     _productsBoxInstance = await Hive.openBox<Product>(_productsBox);
+    _shoppingBoxInstance = await Hive.openBox<ShoppingItem>(_shoppingBox);
 
     if (_userBoxInstance.isEmpty) {
       await _userBoxInstance.put(0, UserPreferences());
@@ -91,5 +96,86 @@ class HiveService {
   // Cerrar Hive (para cuando cierres la app)
   Future<void> close() async {
     await _userBoxInstance.close();
+  }
+
+  // Métodos de shopping list
+
+  // Agregar a lista de compra
+  Future<void> addToShoppingList(ShoppingItem item) async {
+    await _shoppingBoxInstance.put(item.id, item);
+  }
+
+  // Obtener todos los items
+  List<ShoppingItem> getAllShoppingItems() {
+    return _shoppingBoxInstance.values.toList();
+  }
+
+  // Obtener pendientes
+  List<ShoppingItem> getPendingShoppingItems() {
+    return _shoppingBoxInstance.values
+        .where((item) => !item.isPurchased)
+        .toList();
+  }
+
+  // Obtener comprados
+  List<ShoppingItem> getPurchasedShoppingItems() {
+    return _shoppingBoxInstance.values
+        .where((item) => item.isPurchased)
+        .toList();
+  }
+
+  // Marcar como comprado
+  Future<void> markAsPurchased(String itemId) async {
+    final item = _shoppingBoxInstance.get(itemId);
+    if (item != null) {
+      final updated = ShoppingItem(
+        id: item.id,
+        name: item.name,
+        category: item.category,
+        quantity: item.quantity,
+        notes: item.notes,
+        isPurchased: true,
+        originalProductId: item.originalProductId,
+        createdAt: item.createdAt,
+      );
+      await _shoppingBoxInstance.put(itemId, updated);
+    }
+  }
+
+  // Restaurar de comprado a pendiente
+  Future<void> restoreItem(String itemId) async {
+    final item = _shoppingBoxInstance.get(itemId);
+    if (item != null) {
+      final updated = ShoppingItem(
+        id: item.id,
+        name: item.name,
+        category: item.category,
+        quantity: item.quantity,
+        notes: item.notes,
+        isPurchased: false,
+        originalProductId: item.originalProductId,
+        createdAt: item.createdAt,
+      );
+      await _shoppingBoxInstance.put(itemId, updated);
+    }
+  }
+
+  // Eliminar de lista de compra
+  Future<void> removeFromShoppingList(String itemId) async {
+    await _shoppingBoxInstance.delete(itemId);
+  }
+
+  // Limpiar comprados
+  Future<void> clearPurchased() async {
+    final purchased = getPurchasedShoppingItems();
+    for (var item in purchased) {
+      await _shoppingBoxInstance.delete(item.id);
+    }
+  }
+
+  // Cuando un producto llega a 0, mandarlo a shopping list
+  Future<void> productFinished(Product product) async {
+    final shoppingItem = ShoppingItem.fromProduct(product);
+    await addToShoppingList(shoppingItem);
   }
 }

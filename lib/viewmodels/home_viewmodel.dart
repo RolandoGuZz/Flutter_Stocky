@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:stocky/views/shopping_list_view.dart';
 import '../services/hive_service.dart';
 import '../models/product.dart';
 
@@ -81,7 +80,6 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
-  // Cambiar pestaña del bottom nav
   void changeTab(int index, BuildContext context) {
     _selectedIndex = index;
     notifyListeners();
@@ -89,11 +87,17 @@ class HomeViewModel extends ChangeNotifier {
     switch (index) {
       case 0:
         break;
+
       case 1:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ShoppingListView()),
-        ).then((_) {
+        Navigator.pushNamed(context, '/shopping-list').then((_) {
+          _selectedIndex = 0;
+          notifyListeners();
+        });
+        break;
+
+      case 2:
+        // Navegar a Settings (cuando exista)
+        Navigator.pushNamed(context, '/settings').then((_) {
           _selectedIndex = 0;
           notifyListeners();
         });
