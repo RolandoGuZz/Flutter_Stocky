@@ -41,6 +41,7 @@ class ShoppingListContent extends StatelessWidget {
         ),
         backgroundColor: Colors.green,
         elevation: 0,
+        automaticallyImplyLeading: false,
       ),
       body: vm.isLoading
           ? const Center(child: CircularProgressIndicator(color: Colors.green))

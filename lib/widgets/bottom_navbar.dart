@@ -28,7 +28,6 @@ class BottomNavbar extends StatelessWidget {
           icon: Icon(Icons.shopping_cart),
           label: 'Lista',
         ),
-        BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Ajustes'),
       ],
     );
   }

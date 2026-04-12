@@ -49,6 +49,7 @@ class _HomeViewState extends State<HomeView> {
                     ),
               backgroundColor: Colors.green,
               elevation: 0,
+              automaticallyImplyLeading: false,
               actions: [
                 IconButton(
                   icon: Icon(_showSearch ? Icons.close : Icons.search),
