@@ -40,6 +40,9 @@ class Product {
   @HiveField(8)
   final DateTime createdAt;
 
+  @HiveField(9)
+  final int? notificationId;
+
   Product({
     required this.id,
     required this.name,
@@ -50,6 +53,7 @@ class Product {
     this.description,
     required this.isExpired,
     required this.createdAt,
+    this.notificationId,
   });
 
   factory Product.create({
@@ -59,6 +63,7 @@ class Product {
     required ProductType type,
     required DateTime expiryDate,
     String? description,
+    int? notificactionId,
   }) {
     return Product(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -70,6 +75,7 @@ class Product {
       description: description,
       isExpired: expiryDate.isBefore(DateTime.now()),
       createdAt: DateTime.now(),
+      notificationId: notificactionId,
     );
   }
 }

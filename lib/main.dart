@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:stocky/services/notification_service.dart';
 import 'package:stocky/views/app_loader_view.dart';
 import 'package:stocky/views/home_view.dart';
 import 'package:stocky/views/shopping_list_view.dart';
@@ -8,8 +9,12 @@ import 'services/hive_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   final hiveService = HiveService();
   await hiveService.init();
+
+  final notificationService = NotificationService();
+  await notificationService.init();
 
   runApp(Provider<HiveService>.value(value: hiveService, child: const MyApp()));
 }

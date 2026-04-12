@@ -26,13 +26,14 @@ class ProductAdapter extends TypeAdapter<Product> {
       description: fields[6] as String?,
       isExpired: fields[7] as bool,
       createdAt: fields[8] as DateTime,
+      notificationId: fields[9] as int?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Product obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -50,7 +51,9 @@ class ProductAdapter extends TypeAdapter<Product> {
       ..writeByte(7)
       ..write(obj.isExpired)
       ..writeByte(8)
-      ..write(obj.createdAt);
+      ..write(obj.createdAt)
+      ..writeByte(9)
+      ..write(obj.notificationId);
   }
 
   @override

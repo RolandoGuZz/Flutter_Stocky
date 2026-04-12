@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:stocky/services/notification_service.dart';
 import '../models/product.dart';
 import '../services/hive_service.dart';
 
@@ -71,6 +72,30 @@ class AddProductViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<int?> _scheduleNotification(Product product) async {
+    final notificationDate = product.expiryDate.subtract(
+      const Duration(seconds: 10),
+    );
+
+    print('📅 Programando notificación para: $notificationDate');
+    print('📦 Producto: ${product.name}');
+
+    if (notificationDate.isAfter(DateTime.now())) {
+      final notificationId = product.id.hashCode;
+
+      await NotificationService().scheduleNotification(
+        id: notificationId,
+        title: '📅 Producto por caducar',
+        body: '${product.name} caduca en 2 días',
+        scheduledDate: notificationDate,
+        payload: product.id,
+      );
+
+      return notificationId;
+    }
+    return null;
+  }
+
   Future<bool> saveProduct() async {
     if (!isFormValid) {
       _errorMessage = 'Nombre y cantidad son obligatorios';
@@ -83,7 +108,8 @@ class AddProductViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final product = Product.create(
+      final tempProduct = Product(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
         name: _name,
         quantity: _selectedType == ProductType.solid ? _quantity : 0,
         liquidQuantity: _selectedType == ProductType.liquid
@@ -92,6 +118,24 @@ class AddProductViewModel extends ChangeNotifier {
         type: _selectedType,
         expiryDate: _expiryDate,
         description: _description.isEmpty ? null : _description,
+        isExpired: _expiryDate.isBefore(DateTime.now()),
+        createdAt: DateTime.now(),
+        notificationId: null,
+      );
+
+      final notificationId = await _scheduleNotification(tempProduct);
+
+      final product = Product(
+        id: tempProduct.id,
+        name: tempProduct.name,
+        quantity: tempProduct.quantity,
+        liquidQuantity: tempProduct.liquidQuantity,
+        type: tempProduct.type,
+        expiryDate: tempProduct.expiryDate,
+        description: tempProduct.description,
+        isExpired: tempProduct.isExpired,
+        createdAt: tempProduct.createdAt,
+        notificationId: notificationId,
       );
 
       await _hiveService.addProduct(product);
@@ -106,6 +150,42 @@ class AddProductViewModel extends ChangeNotifier {
       return false;
     }
   }
+
+  // Future<bool> saveProduct() async {
+  //   if (!isFormValid) {
+  //     _errorMessage = 'Nombre y cantidad son obligatorios';
+  //     notifyListeners();
+  //     return false;
+  //   }
+
+  //   _isLoading = true;
+  //   _errorMessage = null;
+  //   notifyListeners();
+
+  //   try {
+  //     final product = Product.create(
+  //       name: _name,
+  //       quantity: _selectedType == ProductType.solid ? _quantity : 0,
+  //       liquidQuantity: _selectedType == ProductType.liquid
+  //           ? _liquidQuantity
+  //           : 0.0,
+  //       type: _selectedType,
+  //       expiryDate: _expiryDate,
+  //       description: _description.isEmpty ? null : _description,
+  //     );
+
+  //     await _hiveService.addProduct(product);
+
+  //     _isLoading = false;
+  //     notifyListeners();
+  //     return true;
+  //   } catch (e) {
+  //     _isLoading = false;
+  //     _errorMessage = 'Error al guardar: $e';
+  //     notifyListeners();
+  //     return false;
+  //   }
+  // }
 
   void resetForm() {
     _name = '';
