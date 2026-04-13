@@ -1,115 +1,64 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:permission_handler/permission_handler.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
 
-  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
+  final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  // Inicializar notificaciones
+  bool _isInitialized = false;
+
   Future<void> init() async {
-    const AndroidInitializationSettings androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    if (_isInitialized) return;
 
-    const InitializationSettings initializationSettings =
-        InitializationSettings(android: androidSettings);
+    try {
+      tz.initializeTimeZones();
 
-    await _flutterLocalNotificationsPlugin.initialize(
-      settings: initializationSettings,
-      onDidReceiveNotificationResponse: _onNotificationTap,
-    );
+      const androidSettings = AndroidInitializationSettings(
+        '@mipmap/ic_launcher',
+      );
+      const initSettings = InitializationSettings(android: androidSettings);
 
-    // Inicializar zonas horarias
-    tz.initializeTimeZones();
+      await _notificationsPlugin.initialize(
+        settings: initSettings,
+        onDidReceiveNotificationResponse: _onNotificationTap,
+      );
 
-    // Pedir permisos
-    await _requestPermissions();
-  }
+      await _createNotificationChannel();
 
-  // Permisos (Android 13+)
-  Future<void> _requestPermissions() async {
-    if (await Permission.notification.isDenied) {
-      await Permission.notification.request();
+      _isInitialized = true;
+      print('NotificationService inicializado correctamente');
+    } catch (e) {
+      print('Error inicializando NotificationService: $e');
     }
-
-    await _flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.requestNotificationsPermission();
   }
 
-  // Cuando el usuario toca la notificación
+  Future<void> _createNotificationChannel() async {
+    try {
+      const channel = AndroidNotificationChannel(
+        'stocky_channel',
+        'Recordatorios de Stocky',
+        description: 'Notificaciones cuando los productos están por caducar',
+        importance: Importance.high,
+      );
+
+      await _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >()
+          ?.createNotificationChannel(channel);
+    } catch (e) {
+      print('Error creando canal: $e');
+    }
+  }
+
   void _onNotificationTap(NotificationResponse response) {
-    print('Notificación tocada: ${response.payload}');
+    print('Notificación tocada con payload: ${response.payload}');
   }
-
-  // Mostrar notificación inmediata
-  Future<void> showNotification({
-    required int id,
-    required String title,
-    required String body,
-    String? payload,
-  }) async {
-    const AndroidNotificationDetails androidDetails =
-        AndroidNotificationDetails(
-          'default_channel',
-          'Notificaciones de Stocky',
-          channelDescription: 'Recordatorios de productos por caducar',
-          importance: Importance.high,
-          priority: Priority.high,
-        );
-
-    const NotificationDetails notificationDetails = NotificationDetails(
-      android: androidDetails,
-    );
-
-    await _flutterLocalNotificationsPlugin.show(
-      id: id,
-      title: title,
-      body: body,
-      notificationDetails: notificationDetails,
-      payload: payload,
-    );
-  }
-
-  // Programar notificación
-  // Future<void> scheduleNotification({
-  //   required int id,
-  //   required String title,
-  //   required String body,
-  //   required DateTime scheduledDate,
-  //   String? payload,
-  // }) async {
-  //   const AndroidNotificationDetails androidDetails =
-  //       AndroidNotificationDetails(
-  //         'default_channel',
-  //         'Notificaciones de Stocky',
-  //         channelDescription: 'Recordatorios de productos por caducar',
-  //         importance: Importance.high,
-  //         priority: Priority.high,
-  //       );
-
-  //   const NotificationDetails notificationDetails = NotificationDetails(
-  //     android: androidDetails,
-  //   );
-
-  //   await _flutterLocalNotificationsPlugin.zonedSchedule(
-  //     id: id,
-  //     title: title,
-  //     body: body,
-  //     scheduledDate: tz.TZDateTime.from(scheduledDate, tz.local),
-  //     notificationDetails: notificationDetails,
-  //     androidScheduleMode: AndroidScheduleMode.exact,
-  //     payload: payload,
-  //   );
-  //   print(' Notificación programada con ID: $id para: $scheduledDate');
-  // }
 
   Future<void> scheduleNotification({
     required int id,
@@ -118,46 +67,53 @@ class NotificationService {
     required DateTime scheduledDate,
     String? payload,
   }) async {
-    print('[1] Entró a scheduleNotification con ID: $id');
+    if (!_isInitialized) {
+      await init();
+    }
+
+    if (scheduledDate.isBefore(DateTime.now())) {
+      print('La fecha para la notificación ya pasó');
+      return;
+    }
 
     try {
-      final androidDetails = AndroidNotificationDetails(
-        'default_channel',
-        'Notificaciones de Stocky',
-        channelDescription: 'Recordatorios de productos por caducar',
+      const androidDetails = AndroidNotificationDetails(
+        'stocky_channel',
+        'Recordatorios de Stocky',
+        channelDescription:
+            'Notificaciones cuando los productos están por caducar',
         importance: Importance.high,
         priority: Priority.high,
+        icon: '@mipmap/ic_launcher',
+        playSound: true,
+        enableVibration: true,
       );
-      print('[2] AndroidNotificationDetails creado');
 
-      final notificationDetails = NotificationDetails(android: androidDetails);
-      print('[3] NotificationDetails creado');
+      const notificationDetails = NotificationDetails(android: androidDetails);
 
-      final tzDate = tz.TZDateTime.from(scheduledDate, tz.local);
-      print('[4] Fecha convertida a TZ: $tzDate');
+      final tzDateTime = tz.TZDateTime.from(scheduledDate, tz.local);
 
-      await _flutterLocalNotificationsPlugin.zonedSchedule(
+      await _notificationsPlugin.zonedSchedule(
         id: id,
         title: title,
         body: body,
-        scheduledDate: tz.TZDateTime.from(scheduledDate, tz.local),
+        scheduledDate: tzDateTime,
         notificationDetails: notificationDetails,
-        androidScheduleMode: AndroidScheduleMode.exact,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         payload: payload,
       );
-      print('[5] Notificación programada exitosamente');
+
+      print('Notificación programada: $title para $scheduledDate');
     } catch (e) {
-      print('ERROR en scheduleNotification: $e');
+      print('Error programando notificación: $e');
     }
   }
 
-  // Cancelar una notificación
   Future<void> cancelNotification(int id) async {
-    await _flutterLocalNotificationsPlugin.cancel(id: id);
+    await _notificationsPlugin.cancel(id: id);
   }
 
-  // Cancelar todas
-  Future<void> cancelAllNotifications() async {
-    await _flutterLocalNotificationsPlugin.cancelAll();
+  Future<void> cancelAll() async {
+    await _notificationsPlugin.cancelAll();
   }
 }

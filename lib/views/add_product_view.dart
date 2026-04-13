@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stocky/models/product.dart';
 import 'package:stocky/widgets/custom_text_field.dart';
-import 'package:stocky/widgets/date_piecker_field.dart';
+import 'package:stocky/widgets/date_picker_field.dart';
 import 'package:stocky/widgets/error_message.dart';
 import 'package:stocky/widgets/form_action_buttons.dart';
 import 'package:stocky/widgets/label_widget.dart';

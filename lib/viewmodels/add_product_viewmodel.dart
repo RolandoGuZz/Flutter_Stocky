@@ -79,17 +79,20 @@ class AddProductViewModel extends ChangeNotifier {
   }
 
   Future<int?> _scheduleNotification(Product product) async {
+    // Notificar 2 días antes del vencimiento
     final notificationDate = product.expiryDate.subtract(
-      const Duration(seconds: 10),
+      const Duration(days: 2),
     );
 
-    if (notificationDate.isAfter(DateTime.now())) {
+    // Solo program si la fecha es futura (al menos 1 día en el futuro)
+    final minNotificationDate = DateTime.now().add(const Duration(days: 1));
+    if (notificationDate.isAfter(minNotificationDate)) {
       final notificationId = product.id.hashCode;
 
       await NotificationService().scheduleNotification(
         id: notificationId,
         title: '📅 Producto por caducar',
-        body: '${product.name} caduca en 2 días',
+        body: '${product.name} caduca pronto',
         scheduledDate: notificationDate,
         payload: product.id,
       );
