@@ -140,6 +140,14 @@ class UpdateProductViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Si la cantidad llega a 0 (sólido o líquido), enviar a shopping list
+      bool isFinished = false;
+      if (_type == ProductType.solid && _quantity == 0) {
+        isFinished = true;
+      } else if (_type == ProductType.liquid && _liquidQuantity == 0) {
+        isFinished = true;
+      }
+
       final updatedProduct = Product(
         id: _originalProduct.id,
         name: _name,
@@ -153,6 +161,12 @@ class UpdateProductViewModel extends ChangeNotifier {
       );
 
       await _hiveService.updateProduct(updatedProduct);
+
+      // Si está vacío, agregar a shopping list y eliminar
+      if (isFinished) {
+        await _hiveService.productFinished(_originalProduct);
+        await _hiveService.deleteProduct(_originalProduct.id);
+      }
 
       _isLoading = false;
       notifyListeners();

@@ -23,7 +23,13 @@ class AddProductViewModel extends ChangeNotifier {
   String get description => _description;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
-  bool get isFormValid => _name.trim().isNotEmpty && _quantity > 0;
+  bool get isFormValid {
+    if (_name.trim().isEmpty) return false;
+    if (_selectedType == ProductType.solid) return _quantity > 0;
+    // Para líquidos: debe tener al menos 0.1 litros al agregar
+    return _liquidQuantity > 0;
+  }
+
   ProductType get selectedType => _selectedType;
   double get liquidQuantity => _liquidQuantity;
   bool get isLiquid => _selectedType == ProductType.liquid;
@@ -77,9 +83,6 @@ class AddProductViewModel extends ChangeNotifier {
       const Duration(seconds: 10),
     );
 
-    print('📅 Programando notificación para: $notificationDate');
-    print('📦 Producto: ${product.name}');
-
     if (notificationDate.isAfter(DateTime.now())) {
       final notificationId = product.id.hashCode;
 
@@ -108,6 +111,11 @@ class AddProductViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // Calcular correctamente: vencido solo si la fecha es ANTERIOR a hoy
+      final now = DateTime.now();
+      final todayStart = DateTime(now.year, now.month, now.day);
+      final isExpired = _expiryDate.isBefore(todayStart);
+
       final tempProduct = Product(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         name: _name,
@@ -118,7 +126,7 @@ class AddProductViewModel extends ChangeNotifier {
         type: _selectedType,
         expiryDate: _expiryDate,
         description: _description.isEmpty ? null : _description,
-        isExpired: _expiryDate.isBefore(DateTime.now()),
+        isExpired: isExpired,
         createdAt: DateTime.now(),
         notificationId: null,
       );

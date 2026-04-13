@@ -101,7 +101,7 @@ class _AddProductContentState extends State<AddProductContent> {
                               context: context,
                               type: ProductType.solid,
                               icon: Icons.inventory_2,
-                              label: 'Sólido',
+                              label: 'Unidad',
                               isSelected: vm.selectedType == ProductType.solid,
                               onTap: () => vm.setProductType(ProductType.solid),
                             ),

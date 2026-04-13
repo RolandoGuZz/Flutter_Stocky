@@ -136,6 +136,7 @@ class _UpdateProductContentState extends State<UpdateProductContent> {
                       LiquidQuantitySlider(
                         value: vm.liquidQuantity,
                         onChanged: vm.updateLiquidQuantity,
+                        allowZero: true,
                       ),
                     ] else ...[
                       LabelWidget(text: 'CANTIDAD (UNIDADES)'),

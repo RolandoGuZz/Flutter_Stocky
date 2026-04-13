@@ -178,4 +178,91 @@ class HiveService {
     final shoppingItem = ShoppingItem.fromProduct(product);
     await addToShoppingList(shoppingItem);
   }
+
+  // Verificar y actualizar productos caducos al abrir la app
+  // alsoDelete: si true, elimina el producto del home después de agregarlo a shopping list
+  Future<List<Product>> checkExpiredProducts({
+    bool addToShoppingList = true,
+    bool alsoDelete = false,
+  }) async {
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+
+    final List<Product> newlyExpired = [];
+
+    for (final product in _productsBoxInstance.values) {
+      // Un producto está vencido solo si su fecha es ANTERIOR a hoy
+      // (fecha de ayer o antes, pero HOY no está vencido)
+      final isActuallyExpired = product.expiryDate.isBefore(todayStart);
+
+      // Si el producto está vencido
+      if (isActuallyExpired) {
+        // Solo procesar si no se ha procesado antes
+        final alreadyProcessed = product.notificationId == -1;
+
+        // Actualizar marca de expirado
+        if (!product.isExpired || product.notificationId != -1) {
+          final updated = Product(
+            id: product.id,
+            name: product.name,
+            quantity: product.quantity,
+            liquidQuantity: product.liquidQuantity,
+            type: product.type,
+            expiryDate: product.expiryDate,
+            description: product.description,
+            isExpired: true,
+            createdAt: product.createdAt,
+            notificationId: -1, // Flag: ya procesado
+          );
+          await _productsBoxInstance.put(product.id, updated);
+          newlyExpired.add(updated);
+        }
+
+        // Agregar a shopping list automáticamente solo la primera vez
+        if (addToShoppingList && !alreadyProcessed) {
+          await _addExpiredToShoppingList(product, now);
+        }
+
+        // Eliminar del home si alsoDelete es true
+        if (alsoDelete) {
+          await deleteProduct(product.id);
+        }
+      }
+    }
+
+    return newlyExpired;
+  }
+
+  // Agregar producto vencido a shopping list
+  Future<void> _addExpiredToShoppingList(Product product, DateTime now) async {
+    // Verificar si ya existe en shopping list
+    final existingItems = _shoppingBoxInstance.values
+        .where((item) => item.originalProductId == product.id)
+        .toList();
+
+    if (existingItems.isEmpty) {
+      final shoppingItem = ShoppingItem(
+        id: 'expired_${product.id}',
+        name: product.name,
+        category: 'Productos vencidos',
+        quantity: product.type == ProductType.liquid
+            ? '${product.liquidQuantity} L'
+            : '${product.quantity} unidades',
+        notes: 'Este producto venció el ${_formatDate(product.expiryDate)}',
+        isPurchased: false,
+        originalProductId: product.id,
+        createdAt: now,
+      );
+      await _addItemToShoppingList(shoppingItem);
+    }
+  }
+
+  // Método interno para agregar a shopping list
+  Future<void> _addItemToShoppingList(ShoppingItem item) async {
+    await _shoppingBoxInstance.put(item.id, item);
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
 }

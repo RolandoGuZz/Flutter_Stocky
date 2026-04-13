@@ -34,28 +34,62 @@ class HomeViewModel extends ChangeNotifier {
     }).toList();
   }
 
-  List<Product> get urgentProducts => displayedProducts.where((p) {
-    final daysLeft = p.expiryDate.difference(DateTime.now()).inDays;
-    return daysLeft <= 2 && daysLeft >= 0 && !p.isExpired;
-  }).toList();
+  List<Product> get urgentProducts {
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
 
-  List<Product> get soonProducts => displayedProducts.where((p) {
-    final daysLeft = p.expiryDate.difference(DateTime.now()).inDays;
-    return daysLeft > 2 && daysLeft <= 7 && !p.isExpired;
-  }).toList();
+    return displayedProducts.where((p) {
+      // No incluir los ya marcados como vencidos
+      if (p.isExpired) return false;
+      // Urgente: vence HOY, mañana, o en 2 días o menos
+      final daysLeft = p.expiryDate.difference(todayStart).inDays;
+      return daysLeft >= 0 && daysLeft <= 2;
+    }).toList();
+  }
 
-  List<Product> get stableProducts => displayedProducts.where((p) {
-    final daysLeft = p.expiryDate.difference(DateTime.now()).inDays;
-    return daysLeft > 7 && !p.isExpired;
-  }).toList();
+  List<Product> get soonProducts {
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
 
-  List<Product> get expiredProducts =>
-      displayedProducts.where((p) => p.isExpired).toList();
+    return displayedProducts.where((p) {
+      if (p.isExpired) return false;
+      final daysLeft = p.expiryDate.difference(todayStart).inDays;
+      return daysLeft > 2 && daysLeft <= 7;
+    }).toList();
+  }
+
+  List<Product> get stableProducts {
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+
+    return displayedProducts.where((p) {
+      if (p.isExpired) return false;
+      final daysLeft = p.expiryDate.difference(todayStart).inDays;
+      return daysLeft > 7;
+    }).toList();
+  }
+
+  List<Product> get expiredProducts {
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+
+    return displayedProducts.where((p) {
+      // Ya marcados como vencidos O fecha anterior a hoy
+      return p.isExpired || p.expiryDate.isBefore(todayStart);
+    }).toList();
+  }
 
   // Color según urgencia
   Color getExpiryColor(Product product) {
-    if (product.isExpired) return Colors.grey;
-    final daysLeft = product.expiryDate.difference(DateTime.now()).inDays;
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+
+    // Ya vencido
+    if (product.isExpired || product.expiryDate.isBefore(todayStart)) {
+      return Colors.grey;
+    }
+
+    final daysLeft = product.expiryDate.difference(todayStart).inDays;
     if (daysLeft <= 2) return Colors.red;
     if (daysLeft <= 7) return Colors.orange;
     return Colors.green;
@@ -67,12 +101,17 @@ class HomeViewModel extends ChangeNotifier {
   }
 
   // Cargar productos
-  Future<void> loadProducts() async {
+  Future<void> loadProducts({bool checkExpired = true}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
+      // Verificar y actualizar productos caducos al cargar
+      if (checkExpired) {
+        await _hiveService.checkExpiredProducts();
+      }
+
       _products = _hiveService.getAllProducts();
       _isLoading = false;
     } catch (e) {

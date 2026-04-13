@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 class LiquidQuantitySlider extends StatelessWidget {
   final double value;
   final Function(double) onChanged;
+  final bool allowZero;
 
   const LiquidQuantitySlider({
     super.key,
     required this.value,
     required this.onChanged,
+    this.allowZero = false,
   });
 
   @override
@@ -46,7 +48,7 @@ class LiquidQuantitySlider extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.green,
+                    color: value == 0 ? Colors.red : Colors.green,
                   ),
                 ),
               ),
@@ -55,9 +57,9 @@ class LiquidQuantitySlider extends StatelessWidget {
           SizedBox(height: 16),
           Slider(
             value: value,
-            min: 0.5,
+            min: allowZero ? 0.0 : 0.1,
             max: 3.0,
-            divisions: 25,
+            divisions: allowZero ? 30 : 29,
             onChanged: onChanged,
             activeColor: Colors.green,
             inactiveColor: Colors.grey.shade300,
@@ -66,7 +68,10 @@ class LiquidQuantitySlider extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('0.5 L', style: TextStyle(color: Colors.grey[600])),
+              Text(
+                allowZero ? '0.0 L' : '0.1 L',
+                style: TextStyle(color: Colors.grey[600]),
+              ),
               Text('1.0 L', style: TextStyle(color: Colors.grey[600])),
               Text('2.0 L', style: TextStyle(color: Colors.grey[600])),
               Text('3.0 L', style: TextStyle(color: Colors.grey[600])),
