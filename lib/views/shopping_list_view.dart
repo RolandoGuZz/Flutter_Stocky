@@ -11,11 +11,14 @@ import '../../services/hive_service.dart';
 import '../../widgets/bottom_navbar.dart';
 
 class ShoppingListView extends StatelessWidget {
-  const ShoppingListView({super.key});
+  final HiveService? hiveService;
+
+  const ShoppingListView({super.key, this.hiveService});
 
   @override
   Widget build(BuildContext context) {
-    final hiveService = Provider.of<HiveService>(context, listen: false);
+    final hiveService =
+        this.hiveService ?? Provider.of<HiveService>(context, listen: false);
 
     return ChangeNotifierProvider(
       create: (_) => ShoppingViewModel(hiveService),
@@ -184,9 +187,11 @@ class ShoppingListContent extends StatelessWidget {
         currentIndex: 1,
         onTap: (index) {
           if (index == 0) {
-            Navigator.pushReplacementNamed(context, '/home');
-          } else if (index == 2) {
-            Navigator.pushReplacementNamed(context, '/settings');
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/home',
+              (route) => false,
+            );
           }
         },
         selectedColor: Colors.green,

@@ -24,14 +24,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hiveService = Provider.of<HiveService>(context, listen: false);
+
     return MaterialApp(
       title: 'Stocky',
       theme: ThemeData(primarySwatch: Colors.green, useMaterial3: true),
       home: const AppLoaderView(),
       debugShowCheckedModeBanner: false,
       onGenerateRoute: (settings) {
-        final hiveService = Provider.of<HiveService>(context, listen: false);
-
         switch (settings.name) {
           case '/home':
             final args = settings.arguments as HomeArguments?;

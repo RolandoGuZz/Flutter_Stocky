@@ -7,7 +7,7 @@ class HomeViewModel extends ChangeNotifier {
 
   List<Product> _products = [];
   bool _isLoading = true;
-  int _selectedIndex = 0;
+  final int _selectedIndex = 0;
   String? _errorMessage;
   String _searchQuery = '';
 
@@ -137,26 +137,12 @@ class HomeViewModel extends ChangeNotifier {
 
   // Cambiar pestaña
   void changeTab(int index, BuildContext context) {
-    _selectedIndex = index;
-    notifyListeners();
-
-    switch (index) {
-      case 0:
-        break;
-
-      case 1:
-        Navigator.pushNamed(context, '/shopping-list').then((_) {
-          _selectedIndex = 0;
-          notifyListeners();
-        });
-        break;
-
-      case 2:
-        Navigator.pushNamed(context, '/settings').then((_) {
-          _selectedIndex = 0;
-          notifyListeners();
-        });
-        break;
+    if (index == 1) {
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/shopping-list',
+        (route) => false,
+      );
     }
   }
 
