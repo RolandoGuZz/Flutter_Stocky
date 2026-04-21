@@ -8,6 +8,7 @@ class CustomTextField extends StatelessWidget {
   final int maxLines;
   final bool isOptional;
   final String? initialValue;
+  final int maxLength;
 
   const CustomTextField({
     super.key,
@@ -18,6 +19,7 @@ class CustomTextField extends StatelessWidget {
     this.maxLines = 1,
     this.isOptional = false,
     this.initialValue,
+    this.maxLength = 25,
   });
 
   @override
@@ -41,6 +43,7 @@ class CustomTextField extends StatelessWidget {
         onChanged: onChanged,
         validator: isOptional ? null : validator,
         maxLines: maxLines,
+        maxLength: maxLength,
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(color: Colors.grey.shade400),

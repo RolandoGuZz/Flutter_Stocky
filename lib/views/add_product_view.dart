@@ -154,6 +154,7 @@ class _AddProductContentState extends State<AddProductContent> {
                       onChanged: vm.updateDescription,
                       maxLines: 4,
                       isOptional: true,
+                      maxLength: 40,
                     ),
                     SizedBox(height: 20),
 

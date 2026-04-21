@@ -165,6 +165,7 @@ class _UpdateProductContentState extends State<UpdateProductContent> {
                       maxLines: 4,
                       isOptional: true,
                       initialValue: vm.description,
+                      maxLength: 40,
                     ),
                     SizedBox(height: 20),
 
