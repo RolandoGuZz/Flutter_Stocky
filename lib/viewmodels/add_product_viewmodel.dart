@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:stocky/services/notification_service.dart';
+import 'package:stocky/main.dart';
 import '../models/product.dart';
 import '../services/hive_service.dart';
 
@@ -78,28 +78,92 @@ class AddProductViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  String _getQuantityText(Product product) {
+    if (product.type == ProductType.liquid) {
+      return '${product.liquidQuantity} L';
+    }
+    return '${product.quantity} unidades';
+  }
+
+  String _getExpiryMessage(Product product, int daysUntilExpiry) {
+    final quantity = _getQuantityText(product);
+    final name = product.name;
+
+    if (daysUntilExpiry <= 0) {
+      return '$name caduca hoy ($quantity)';
+    } else if (daysUntilExpiry == 1) {
+      return '$name caduca mañana ($quantity)';
+    } else if (daysUntilExpiry == 2) {
+      return '$name caduca pasado mañana ($quantity)';
+    } else {
+      return '$name caduca en $daysUntilExpiry días ($quantity)';
+    }
+  }
+
   Future<int?> _scheduleNotification(Product product) async {
-    // Notificar 2 días antes del vencimiento
-    final notificationDate = product.expiryDate.subtract(
-      const Duration(days: 2),
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final expiryDateOnly = DateTime(
+      product.expiryDate.year,
+      product.expiryDate.month,
+      product.expiryDate.day,
     );
 
-    // Solo program si la fecha es futura (al menos 1 día en el futuro)
-    final minNotificationDate = DateTime.now().add(const Duration(days: 1));
-    if (notificationDate.isAfter(minNotificationDate)) {
-      final notificationId = product.id.hashCode;
+    final daysUntilExpiry = expiryDateOnly.difference(todayStart).inDays;
 
-      await NotificationService().scheduleNotification(
-        id: notificationId,
-        title: '📅 Producto por caducar',
-        body: '${product.name} caduca pronto',
-        scheduledDate: notificationDate,
+    int? lastNotificationId;
+
+    // Si caduca hoy, notificar de inmediato
+    if (daysUntilExpiry <= 0) {
+      final body = _getExpiryMessage(product, 0);
+      await notificationServiceGlobal.showImmediateNotification(
+        id: product.id.hashCode,
+        title: '⚠️ Producto caduca HOY',
+        body: body,
         payload: product.id,
       );
+      lastNotificationId = product.id.hashCode;
+    } else {
+      // Notificar 2 días antes (si hay al menos 2 días)
+      if (daysUntilExpiry >= 2) {
+        final twoDaysBefore = product.expiryDate.subtract(
+          const Duration(days: 2),
+        );
+        if (twoDaysBefore.isAfter(now)) {
+          final notificationId = product.id.hashCode;
+          await notificationServiceGlobal.scheduleNotification(
+            id: notificationId,
+            title: '📅 Producto por caducar',
+            body: _getExpiryMessage(product, 2),
+            scheduledDate: twoDaysBefore,
+            payload: product.id,
+          );
+          lastNotificationId = notificationId;
+        }
+      }
 
-      return notificationId;
+      // Notificar el día del vencimiento
+      final expiryDay = DateTime(
+        product.expiryDate.year,
+        product.expiryDate.month,
+        product.expiryDate.day,
+        9, // 9 AM del día de vencimiento
+      );
+
+      if (expiryDay.isAfter(now)) {
+        final notificationId2 = product.id.hashCode + 1;
+        await notificationServiceGlobal.scheduleNotification(
+          id: notificationId2,
+          title: '⚠️ Producto caduca HOY',
+          body: _getExpiryMessage(product, 0),
+          scheduledDate: expiryDay,
+          payload: product.id,
+        );
+        lastNotificationId = notificationId2;
+      }
     }
-    return null;
+
+    return lastNotificationId;
   }
 
   Future<bool> saveProduct() async {

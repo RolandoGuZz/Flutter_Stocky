@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -18,22 +19,54 @@ class NotificationService {
     try {
       tz.initializeTimeZones();
 
+      // Configuración para Android
       const androidSettings = AndroidInitializationSettings(
         '@mipmap/ic_launcher',
       );
-      const initSettings = InitializationSettings(android: androidSettings);
+
+      // Configuración para iOS (si aplica)
+      const darwinSettings = DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+      );
+
+      final initSettings = InitializationSettings(
+        android: androidSettings,
+        iOS: darwinSettings,
+      );
 
       await _notificationsPlugin.initialize(
         settings: initSettings,
         onDidReceiveNotificationResponse: _onNotificationTap,
       );
 
+      // Solicitar permisos en Android 13+
+      if (Platform.isAndroid) {
+        await _requestPermissions();
+      }
+
+      // Crear canal de notificaciones
       await _createNotificationChannel();
 
       _isInitialized = true;
-      print('NotificationService inicializado correctamente');
     } catch (e) {
       print('Error inicializando NotificationService: $e');
+    }
+  }
+
+  Future<void> _requestPermissions() async {
+    try {
+      final androidPlugin = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+
+      if (androidPlugin != null) {
+        await androidPlugin.requestNotificationsPermission();
+      }
+    } catch (e) {
+      print('Error solicitando permisos: $e');
     }
   }
 
@@ -106,6 +139,72 @@ class NotificationService {
       print('Notificación programada: $title para $scheduledDate');
     } catch (e) {
       print('Error programando notificación: $e');
+    }
+  }
+
+  Future<void> showTestNotification() async {
+    if (!_isInitialized) {
+      await init();
+    }
+
+    try {
+      const androidDetails = AndroidNotificationDetails(
+        'stocky_channel',
+        'Recordatorios de Stocky',
+        channelDescription:
+            'Notificaciones cuando los productos están por caducar',
+        importance: Importance.high,
+        priority: Priority.high,
+        icon: '@mipmap/ic_launcher',
+      );
+
+      const notificationDetails = NotificationDetails(android: androidDetails);
+
+      await _notificationsPlugin.show(
+        id: 0,
+        title: 'Stocky',
+        body: 'Notificaciones funcionando correctamente',
+        notificationDetails: notificationDetails,
+      );
+    } catch (e) {
+      print('Error mostrando notificación: $e');
+    }
+  }
+
+  Future<void> showImmediateNotification({
+    required int id,
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    if (!_isInitialized) {
+      await init();
+    }
+
+    try {
+      const androidDetails = AndroidNotificationDetails(
+        'stocky_channel',
+        'Recordatorios de Stocky',
+        channelDescription:
+            'Notificaciones cuando los productos están por caducar',
+        importance: Importance.high,
+        priority: Priority.high,
+        icon: '@mipmap/ic_launcher',
+        playSound: true,
+        enableVibration: true,
+      );
+
+      const notificationDetails = NotificationDetails(android: androidDetails);
+
+      await _notificationsPlugin.show(
+        id: id,
+        title: title,
+        body: body,
+        notificationDetails: notificationDetails,
+        payload: payload,
+      );
+    } catch (e) {
+      print('Error mostrando notificación inmediata: $e');
     }
   }
 
